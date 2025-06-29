@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: localai
+  namespace: localai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: localai
+  template:
+    metadata:
+      labels:
+        app: localai
+    spec:
+      containers:
+        - name: localai
+          image: localai/localai:latest
+          ports:
+            - containerPort: 3000

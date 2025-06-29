@@ -3,7 +3,7 @@
 resource "azurerm_kubernetes_cluster_node_pool" "linux_node_pool" {
   name                  = "linuxpool"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
-  zones = ["1", "2", "3"]
+  zones                 = ["1", "2", "3"]
 
   enable_auto_scaling = true
   min_count           = 1
@@ -22,8 +22,8 @@ resource "azurerm_kubernetes_cluster_node_pool" "linux_node_pool" {
   os_sku          = "Ubuntu"
   os_type         = "Linux"
 
-  priority = "Regular"
-  mode = "User"
+  priority    = "Regular"
+  mode        = "User"
   node_taints = []
 
   tags = {
