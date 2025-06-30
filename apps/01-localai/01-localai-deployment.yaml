@@ -17,6 +17,6 @@ spec:
         - name: localai
           image: localai/localai:latest
           args:
-            - "--address=0.0.0.0:3000"
+            - "--address=0.0.0.0:80"
           ports:
-            - containerPort: 3000
+            - containerPort: 80
