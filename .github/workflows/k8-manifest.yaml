@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - 'app-manifests/01-localai/templates/**'
-      - 'app-manifests/02-prometheus/**'
+      - 'app-manifests/02-photoprisma/**'
       - 'app-manifests/03-argocd/**'
   push:
     branches:
