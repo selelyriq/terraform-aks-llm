@@ -1,0 +1,86 @@
+# Default values for photoprism.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: photoprism/photoprism
+  tag: "231128"
+  #tag: "230603"
+  #tag:  "220302-impish"
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+adminPassword: "photoALBUM!!"
+
+config:
+  PHOTOPRISM_DEBUG: true
+  PHOTOPRISM_READONLY: true
+  PHOTOPRISM_SITE_URL: https://gallery2.p80n.me
+  PHOTOPRISM_DISABLE_WEBDAV: true
+  PHOTOPRISM_DISABLE_CHOWN: "true"
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+
+persistence:
+  enabled: true
+  storagePath: &storagePath /photoprism/storage
+  originalsPath: &originalsPath /photoprism/originals
+  volumeMounts:
+  - name: originals
+    mountPath: *originalsPath
+  volumes:
+  # - name: storage
+  #   nfs:
+  #     server: q80nas
+  #     path: /photoprism
+  - name: originals
+    nfs:
+      server: q80nas
+      path: /photoprism
+  - name: storage
+    emptyDir: {}
+      
+#    mountOptions:
+#    - nfsvers=4.1
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+    certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/limit-connections: "80"
+    nginx.ingress.kubernetes.io/limit-rpm: "500"
+  hosts:
+  - host: gallery2.p80n.me
+    paths:
+    - /
+  tls:
+  - hosts:
+    - gallery2.p80n.me
+    secretName: gallery-cert
+
+resources:
+  requests:
+    memory: 6Gi
+  limits:
+    memory: 16Gi
+
+#nodeSelector:
+#  app: photoprism
+
+database:
+  driver: mysql
+  name: photoprism
+  user: photoprism
+  password: photoprism
+  host: mariadb.db-mariadb
