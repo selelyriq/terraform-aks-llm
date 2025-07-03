@@ -1,0 +1,7 @@
+server:
+  service:
+    type: LoadBalancer  # Expose Grafana UI externally
+
+configs:
+  params:
+    server.insecure: true  # optional: disable TLS for PoC
