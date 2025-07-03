@@ -39,3 +39,17 @@ resource "helm_release" "grafana" {
     file("${path.module}/grafana/values.yaml")
   ]
 }
+
+resource "helm_release" "node_exporter" {
+  name       = "node-exporter"
+  namespace  = "monitoring"
+  chart      = "prometheus-node-exporter"
+  repository = "https://prometheus-community.github.io/helm-charts"
+  version    = "4.24.0" # Check https://artifacthub.io/packages/helm/prometheus-community/prometheus-node-exporter
+
+  create_namespace = true
+
+  values = [
+    file("${path.module}/node-exporter/values.yaml")
+  ]
+}
