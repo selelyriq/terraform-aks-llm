@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-localai
+  namespace: localai
+spec:
+  rules:
+    - host: localai.dev.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: localai-service
+                port:
+                  number: 4000

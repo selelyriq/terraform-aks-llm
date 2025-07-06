@@ -53,3 +53,15 @@ resource "helm_release" "node_exporter" {
     file("${path.module}/node-exporter/values.yaml")
   ]
 }
+
+resource "helm_release" "ingress" {
+  name             = "ingress-nginx"
+  chart            = "ingress-nginx"
+  namespace        = "ingress-nginx"
+  create_namespace = true
+  repository       = "https://kubernetes.github.io/ingress-nginx"
+  version          = "4.12.3"
+  values = [
+    file("${path.module}/nginx-ingress/values.yaml")
+  ]
+}
