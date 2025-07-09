@@ -25,7 +25,7 @@ jobs:
           sudo mv kubeconform /usr/local/bin/
       - name: Run kubeconform
         run: |
-          kubeconform -strict -summary -output text -kubernetes-version 1.27 k8s-manifests/
+          kubeconform -strict -summary -output text -kubernetes-version 1.29.0 app-manifests/
 
       # Scan with Trivy
       - name: Install Trivy
@@ -38,7 +38,7 @@ jobs:
           sudo apt-get install -y trivy
       - name: Run Trivy config scan
         run: |
-          trivy config --severity HIGH,CRITICAL k8s-manifests/
+          trivy config --severity HIGH,CRITICAL app-manifests/
 
       # Policy checks with Conftest
       - name: Install Conftest
@@ -47,12 +47,12 @@ jobs:
           sudo mv conftest /usr/local/bin/
       - name: Run Conftest
         run: |
-          conftest test k8s-manifests/
+          conftest test app-manifests/
 
       # Upload SARIF to GitHub Security tab
       - name: Run Trivy with SARIF output
         run: |
-          trivy config --format sarif --output trivy-results.sarif k8s-manifests/
+          trivy config --format sarif --output trivy-results.sarif app-manifests/
       - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v2
         with:
