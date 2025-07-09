@@ -18,6 +18,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Install Helm
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.14.2
+
+      # Render Helm charts
+      - name: Render localai chart
+        run: |
+          mkdir -p rendered-manifests/localai
+          helm template localai app-manifests/01-localai/localai -n localai --output-dir rendered-manifests/localai
+      - name: Render photoprism chart
+        run: |
+          mkdir -p rendered-manifests/photoprism
+          helm template photoprism app-manifests/02-photoprisma/photoprism -n photoprism --output-dir rendered-manifests/photoprism
+
       # Validate syntax & schema
       - name: Install kubeconform
         run: |
@@ -25,7 +41,13 @@ jobs:
           sudo mv kubeconform /usr/local/bin/
       - name: Run kubeconform
         run: |
-          kubeconform -strict -summary -output text -kubernetes-version 1.29.0 app-manifests/
+          kubeconform -strict -summary -output text -kubernetes-version 1.29.0 \
+            -schema-location 'https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/crds/application-crd.yaml' \
+            -schema-location 'https://raw.githubusercontent.com/cert-manager/cert-manager/release-1.14/deploy/crds/crd-clusterissuer.yaml' \
+            app-manifests/01-localai/templates/ \
+            app-manifests/03-argocd/ \
+            app-manifests/04-ingress/ \
+            rendered-manifests/
 
       # Scan with Trivy
       - name: Install Trivy
@@ -38,7 +60,7 @@ jobs:
           sudo apt-get install -y trivy
       - name: Run Trivy config scan
         run: |
-          trivy config --severity HIGH,CRITICAL app-manifests/
+          trivy config --severity HIGH,CRITICAL app-manifests/01-localai/templates/ app-manifests/03-argocd/ app-manifests/04-ingress/ rendered-manifests/
 
       # Policy checks with Conftest
       - name: Install Conftest
@@ -47,12 +69,12 @@ jobs:
           sudo mv conftest /usr/local/bin/
       - name: Run Conftest
         run: |
-          conftest test app-manifests/
+          conftest test app-manifests/01-localai/templates/ app-manifests/03-argocd/ app-manifests/04-ingress/ rendered-manifests/
 
       # Upload SARIF to GitHub Security tab
       - name: Run Trivy with SARIF output
         run: |
-          trivy config --format sarif --output trivy-results.sarif app-manifests/
+          trivy config --format sarif --output trivy-results.sarif app-manifests/01-localai/templates/ app-manifests/03-argocd/ app-manifests/04-ingress/ rendered-manifests/
       - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v2
         with:
