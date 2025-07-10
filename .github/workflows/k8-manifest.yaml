@@ -64,6 +64,7 @@ jobs:
           kubeconform -strict -summary -output text -kubernetes-version 1.29.0 \
             -schema-location default \
             -schema-location 'scanning/schemas/{{.Group}}/{{.ResourceAPIVersion}}/{{.ResourceKind}}.json' \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
             rendered-manifests/
       - name: Upload validated manifests
         uses: actions/upload-artifact@v4
