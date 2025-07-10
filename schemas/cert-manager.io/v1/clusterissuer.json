@@ -17,9 +17,22 @@
         "properties": {
           "selfSigned": {
             "type": "object"
+          },
+          "acme": {
+            "type": "object",
+            "properties": {
+              "server": { "type": "string" },
+              "email": { "type": "string" },
+              "privateKeySecretRef": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" }
+                }
+              },
+              "solvers": { "type": "array" }
+            }
           }
-        },
-        "required": ["selfSigned"]
+        }
       }
     },
     "required": ["apiVersion", "kind", "metadata", "spec"]
