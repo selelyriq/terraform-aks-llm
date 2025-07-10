@@ -58,7 +58,7 @@ jobs:
         run: |
           kubeconform -strict -summary -output text -kubernetes-version 1.29.0 \
             -schema-location default \
-            -schema-location "schemas/{{ .Group }}/{{ .Version }}/{{ .Kind }}.json" \
+            -schema-location "schemas/{{ .Group }}/{{ .ResourceAPIVersion }}/{{ .ResourceKind }}.json" \
             app-manifests/01-localai/templates/ \
             app-manifests/03-argocd/ \
             app-manifests/04-ingress/ \
