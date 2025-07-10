@@ -90,6 +90,26 @@ ingress:
     - my.domain.com
     secretName: photoprism-cert
 
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+securityContext:
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
 # securityContext:
 #   fsGroup: 100
 #   runAsUser: 1000

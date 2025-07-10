@@ -9,7 +9,7 @@ spec:
     matchLabels:
       app.kubernetes.io/name: {{ include "photoprism.name" . }}
       app.kubernetes.io/instance: {{ .Release.Name }}
-  serviceName: {{ include "photoprism.fullname" . }}
+  serviceName: {{ .Release.Name }}
   replicas: {{ .Values.replicaCount | default 1 }}
   template:
     metadata:
@@ -17,10 +17,14 @@ spec:
         app.kubernetes.io/name: {{ include "photoprism.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
-      {{- with .Values.securityContext }}
-      securityContext:
-        {{- toYaml . | nindent 8 }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+        - name: photoprism-storage
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default (include "photoprism.fullname" .) }}
       {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       terminationGracePeriodSeconds: 5
       {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -28,10 +32,11 @@ spec:
       {{- end }}
 
       containers:
-      - name: photoprism
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
         env:
         - name: PHOTOPRISM_HTTP_HOST
           value: 0.0.0.0

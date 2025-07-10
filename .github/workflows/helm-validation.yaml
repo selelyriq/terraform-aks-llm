@@ -57,8 +57,19 @@ jobs:
       - name: Set up KinD cluster
         uses: helm/kind-action@v1.10.0
 
+      - name: Debug Helm install failures
+        if: failure()
+        run: |
+          kubectl get pods -A
+          kubectl describe pods -A
+          kubectl logs -A --all-containers=true --ignore-errors=true
+
+      - name: Wait for CoreDNS
+        run: |
+          kubectl rollout status deployment/coredns -n kube-system --timeout=120s
+
       - name: Wait for cluster nodes to be ready
-        run: kubectl wait --for=condition=Ready node --all --timeout=300s
+        run: kubectl wait --for=condition=Ready node --all --timeout=10m
 
       - name: Install Helm chart
         run: helm install my-release app-manifests/01-localai/localai --wait
