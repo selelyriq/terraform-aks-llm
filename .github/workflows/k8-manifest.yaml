@@ -63,7 +63,7 @@ jobs:
         run: |
           kubeconform -strict -summary -output text -kubernetes-version 1.29.0 \
             -schema-location default \
-            -schema-location 'schemas/{{.Group}}/{{.Version}}/{{.ResourceKind}}.json' \
+            -schema-location 'schemas/{{.Group}}/{{.ResourceAPIVersion}}/{{.ResourceKind}}.json' \
             rendered-manifests/
       - name: Upload validated manifests
         uses: actions/upload-artifact@v4
