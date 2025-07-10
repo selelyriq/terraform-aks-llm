@@ -58,8 +58,7 @@ jobs:
         run: |
           kubeconform -strict -summary -output text -kubernetes-version 1.29.0 \
             -schema-location default \
-            -schema-location 'https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/crds/application-crd.yaml' \
-            -schema-location 'https://raw.githubusercontent.com/cert-manager/cert-manager/release-1.14/deploy/crds/crd-clusterissuer.yaml' \
+            -schema-location "schemas/{{ .Group }}/{{ .Version }}/{{ .Kind }}.json" \
             app-manifests/01-localai/templates/ \
             app-manifests/03-argocd/ \
             app-manifests/04-ingress/ \
