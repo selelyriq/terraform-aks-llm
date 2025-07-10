@@ -42,18 +42,25 @@ persistence:
       mountPath: *storagePath
 
   volumeClaimTemplates:
-    - name: originals
-      accessMode: ReadWriteMany
-      size: 10Gi
-      storageClassName: azurefile-csi
-    - name: storage
-      accessMode: ReadWriteMany
-      size: 10Gi
-      storageClassName: azurefile-csi
+    - metadata:
+        name: originals
+      spec:
+        accessModes: [ "ReadWriteMany" ]
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: azurefile-csi
+    - metadata:
+        name: storage
+      spec:
+        accessModes: [ "ReadWriteMany" ]
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: azurefile-csi
       
   # volumeClaimTemplates:
   # - metadata:
-  #     name: photoprism
   #   spec:
   #     accessModes: [ "ReadWriteMany" ]
   #     storageClassName: "my-storage-class"   # You'll probably want to ensure your storage class has `reclaimPolicy: Retain`
