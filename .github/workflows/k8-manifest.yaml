@@ -54,15 +54,22 @@ jobs:
         run: |
           curl -L https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
           sudo mv kubeconform /usr/local/bin/
+      - name: Consolidate all manifests
+        run: |
+          cp -r app-manifests/01-localai/templates/* rendered-manifests/
+          cp -r app-manifests/03-argocd/* rendered-manifests/
+          cp -r app-manifests/04-ingress/* rendered-manifests/
       - name: Run kubeconform
         run: |
           kubeconform -strict -summary -output text -kubernetes-version 1.29.0 \
             -schema-location default \
-            -schema-location "schemas/{{ .Group }}/{{ .ResourceAPIVersion }}/{{ .ResourceKind }}.json" \
-            app-manifests/01-localai/templates/ \
-            app-manifests/03-argocd/ \
-            app-manifests/04-ingress/ \
+            -schema-location 'schemas/{{.Group}}/{{.Version}}/{{.ResourceKind | lower}}.json' \
             rendered-manifests/
+      - name: Upload validated manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: validated-manifests
+          path: rendered-manifests/
 
   scan-manifests:
     runs-on: ubuntu-latest
@@ -71,10 +78,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download rendered manifests
+      - name: Download validated manifests
         uses: actions/download-artifact@v4
         with:
-          name: rendered-manifests
+          name: validated-manifests
           path: rendered-manifests/
 
       - name: Install Trivy
@@ -87,10 +94,10 @@ jobs:
           sudo apt-get install -y trivy
       - name: Run Trivy config scan
         run: |
-          trivy config --severity HIGH,CRITICAL app-manifests/01-localai/templates/ app-manifests/03-argocd/ app-manifests/04-ingress/ rendered-manifests/
+          trivy config --severity HIGH,CRITICAL rendered-manifests/
       - name: Run Trivy with SARIF output
         run: |
-          trivy config --format sarif --output trivy-results.sarif app-manifests/01-localai/templates/ app-manifests/03-argocd/ app-manifests/04-ingress/ rendered-manifests/
+          trivy config --format sarif --output trivy-results.sarif rendered-manifests/
       - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v2
         with:
