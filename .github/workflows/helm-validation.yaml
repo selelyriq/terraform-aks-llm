@@ -57,13 +57,6 @@ jobs:
       - name: Set up KinD cluster
         uses: helm/kind-action@v1.10.0
 
-      - name: Debug Helm install failures
-        if: failure()
-        run: |
-          kubectl get pods -A
-          kubectl describe pods -A
-          kubectl logs -A --all-containers=true --ignore-errors=true
-
       - name: Wait for CoreDNS
         run: |
           kubectl rollout status deployment/coredns -n kube-system --timeout=120s
@@ -74,18 +67,18 @@ jobs:
       - name: Install Helm chart
         run: helm install my-release app-manifests/01-localai/localai --wait
 
-      - name: Debug failed resources
-        if: failure()
-        run: |
-          echo "=== PODS ==="
-          kubectl get pods -A -o wide
-          echo "=== DESCRIBE ==="
-          kubectl describe pods -A || true
-          echo "=== LOGS ==="
-          kubectl logs -A --all-containers=true --ignore-errors=true || true
+      - name: Test Helm chart
+        run: helm test my-release
 
-            - name: Test Helm chart
-              run: helm test my-release
+      - name: Debug failed resources
+        if: ${{ failure() }}
+        run: |
+          echo "Helm install or test failed. Debugging..."
+          echo "=== DESCRIBE PODS ==="
+          kubectl describe pods -A
+          echo "=== ALL POD LOGS ==="
+          # The following command gets all logs from all containers in all pods
+          kubectl logs --all-containers=true --tail=-1 -A
 
   validate-argocd:
     runs-on: ubuntu-latest
