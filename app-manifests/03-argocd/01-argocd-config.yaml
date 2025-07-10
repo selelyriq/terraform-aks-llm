@@ -4,6 +4,7 @@ metadata:
   name: localai
   namespace: argocd
 spec:
+  project: default
   source:
     repoURL: https://github.com/selelyriq/terraform-aks-llm.git
     path: app-manifests/01-localai
