@@ -11,20 +11,17 @@ on:
       - main
 
 jobs:
-  validate-k8s-manifests:
+  render-charts:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # Install Helm
       - name: Install Helm
-        uses: azure/setup-helm@v3
+        uses: azure/setup-helm@v4
         with:
           version: v3.14.2
 
-      # Render Helm charts
       - name: Render localai chart
         run: |
           mkdir -p rendered-manifests/localai
@@ -33,8 +30,26 @@ jobs:
         run: |
           mkdir -p rendered-manifests/photoprism
           helm template photoprism app-manifests/02-photoprisma/photoprism -n photoprism --output-dir rendered-manifests/photoprism
+      
+      - name: Upload rendered manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-manifests
+          path: rendered-manifests/
 
-      # Validate syntax & schema
+  validate-manifests:
+    runs-on: ubuntu-latest
+    needs: render-charts
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download rendered manifests
+        uses: actions/download-artifact@v4
+        with:
+          name: rendered-manifests
+          path: rendered-manifests/
+
       - name: Install kubeconform
         run: |
           curl -L https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
@@ -50,7 +65,19 @@ jobs:
             app-manifests/04-ingress/ \
             rendered-manifests/
 
-      # Scan with Trivy
+  scan-manifests:
+    runs-on: ubuntu-latest
+    needs: render-charts
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download rendered manifests
+        uses: actions/download-artifact@v4
+        with:
+          name: rendered-manifests
+          path: rendered-manifests/
+
       - name: Install Trivy
         run: |
           sudo apt-get update
@@ -62,17 +89,6 @@ jobs:
       - name: Run Trivy config scan
         run: |
           trivy config --severity HIGH,CRITICAL app-manifests/01-localai/templates/ app-manifests/03-argocd/ app-manifests/04-ingress/ rendered-manifests/
-
-      # Policy checks with Conftest
-      - name: Install Conftest
-        run: |
-          curl -L https://github.com/open-policy-agent/conftest/releases/latest/download/conftest_Linux_x86_64.tar.gz | tar xz
-          sudo mv conftest /usr/local/bin/
-      - name: Run Conftest
-        run: |
-          conftest test app-manifests/01-localai/templates/ app-manifests/03-argocd/ app-manifests/04-ingress/ rendered-manifests/
-
-      # Upload SARIF to GitHub Security tab
       - name: Run Trivy with SARIF output
         run: |
           trivy config --format sarif --output trivy-results.sarif app-manifests/01-localai/templates/ app-manifests/03-argocd/ app-manifests/04-ingress/ rendered-manifests/
@@ -80,3 +96,24 @@ jobs:
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: trivy-results.sarif
+
+  policy-checks:
+    runs-on: ubuntu-latest
+    needs: render-charts
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download rendered manifests
+        uses: actions/download-artifact@v4
+        with:
+          name: rendered-manifests
+          path: rendered-manifests/
+
+      - name: Install Conftest
+        run: |
+          curl -L https://github.com/open-policy-agent/conftest/releases/latest/download/conftest_Linux_x86_64.tar.gz | tar xz
+          sudo mv conftest /usr/local/bin/
+      - name: Run Conftest
+        run: |
+          conftest test app-manifests/01-localai/templates/ app-manifests/03-argocd/ app-manifests/04-ingress/ rendered-manifests/ 

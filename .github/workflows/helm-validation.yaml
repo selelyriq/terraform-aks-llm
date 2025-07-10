@@ -1,4 +1,4 @@
-name: Helm Test and Scan
+name: Helm Test, Scan, and Deploy
 
 on:
   push:
@@ -7,8 +7,44 @@ on:
   pull_request:
 
 jobs:
-  test-and-scan:
+  lint-and-scan:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Linting Helm chart
+        run: helm lint app-manifests/01-localai/localai
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get update && sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y trivy
+      
+      - name: Scan Helm chart with Trivy
+        run: trivy config --exit-code 0 --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL app-manifests/01-localai/localai
+      
+      - name: Render Helm template and save manifest
+        run: |
+          helm template my-release app-manifests/01-localai/localai --values app-manifests/01-localai/localai/values.yaml > rendered-localai.yaml
+      
+      - name: Upload rendered manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-localai-manifest
+          path: rendered-localai.yaml
+
+  test-on-kind:
+    runs-on: ubuntu-latest
+    needs: lint-and-scan
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,22 +57,8 @@ jobs:
       - name: Set up KinD cluster
         uses: helm/kind-action@v1.10.0
 
-      - name: Linting Helm chart
-        run: helm lint app-manifests/01-localai/localai
-
-      - name: Install Trivy
-        run: |
-          sudo apt-get install wget apt-transport-https gnupg lsb-release
-          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
-          sudo apt-get update
-          sudo apt-get install trivy
-      
-      - name: Scan Helm chart with Trivy
-        run: trivy config --exit-code 0 --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL app-manifests/01-localai/localai
-
-      - name: Render Helm template (simulate ArgoCD rendering)
-        run: helm template my-release app-manifests/01-localai/localai --values app-manifests/01-localai/localai/values.yaml  
+      - name: Wait for cluster nodes to be ready
+        run: kubectl wait --for=condition=Ready node --all --timeout=300s
 
       - name: Install Helm chart
         run: helm install my-release app-manifests/01-localai/localai --wait
@@ -44,17 +66,17 @@ jobs:
       - name: Test Helm chart
         run: helm test my-release
 
+  validate-argocd:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -L https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
+          sudo mv kubeconform /usr/local/bin/
+
       - name: Validate ArgoCD Application YAML
         run: |
-          kubectl apply --dry-run=client -f app-manifests/03-argocd/01-argocd-config.yaml
-
-      - name: Save rendered manifests
-        run: |
-          helm template my-release app-manifests/01-localai/localai \
-            --values app-manifests/01-localai/localai/values.yaml > rendered.yaml
-
-      - name: Upload rendered manifests
-        uses: actions/upload-artifact@v4
-        with:
-          name: rendered-helm-output
-          path: rendered.yaml
+          kubeconform -schema-location 'https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/crds/application-crd.yaml' app-manifests/03-argocd/01-argocd-config.yaml 
