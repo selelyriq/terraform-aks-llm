@@ -75,10 +75,10 @@ jobs:
         run: |
           echo "Helm install or test failed. Debugging..."
           echo "=== DESCRIBE PODS ==="
-          kubectl describe pods -A
+          kubectl describe pods --all-namespaces
           echo "=== ALL POD LOGS ==="
           # The following command gets all logs from all containers in all pods
-          kubectl logs --all-containers=true --tail=-1 -A
+          kubectl logs --all-containers=true --tail=-1 --all-namespaces
 
   validate-argocd:
     runs-on: ubuntu-latest
