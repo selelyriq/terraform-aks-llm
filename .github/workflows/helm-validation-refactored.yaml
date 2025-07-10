@@ -57,6 +57,9 @@ jobs:
       - name: Set up KinD cluster
         uses: helm/kind-action@v1.10.0
 
+      - name: Wait for cluster nodes to be ready
+        run: kubectl wait --for=condition=Ready node --all --timeout=300s
+
       - name: Install Helm chart
         run: helm install my-release app-manifests/01-localai/localai --wait
 
