@@ -74,8 +74,18 @@ jobs:
       - name: Install Helm chart
         run: helm install my-release app-manifests/01-localai/localai --wait
 
-      - name: Test Helm chart
-        run: helm test my-release
+      - name: Debug failed resources
+        if: failure()
+        run: |
+          echo "=== PODS ==="
+          kubectl get pods -A -o wide
+          echo "=== DESCRIBE ==="
+          kubectl describe pods -A || true
+          echo "=== LOGS ==="
+          kubectl logs -A --all-containers=true --ignore-errors=true || true
+
+            - name: Test Helm chart
+              run: helm test my-release
 
   validate-argocd:
     runs-on: ubuntu-latest
