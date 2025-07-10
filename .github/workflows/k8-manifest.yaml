@@ -63,7 +63,7 @@ jobs:
         run: |
           kubeconform -strict -summary -output text -kubernetes-version 1.29.0 \
             -schema-location default \
-            -schema-location 'schemas/{{.Group}}/{{.ResourceAPIVersion}}/{{.ResourceKind}}.json' \
+            -schema-location 'scanning/schemas/{{.Group}}/{{.ResourceAPIVersion}}/{{.ResourceKind}}.json' \
             rendered-manifests/
       - name: Upload validated manifests
         uses: actions/upload-artifact@v4
@@ -123,4 +123,4 @@ jobs:
           sudo mv conftest /usr/local/bin/
       - name: Run Conftest
         run: |
-          conftest test app-manifests/01-localai/templates/ app-manifests/03-argocd/ app-manifests/04-ingress/ rendered-manifests/ 
+          conftest test --policy scanning/policy app-manifests/01-localai/templates/ app-manifests/03-argocd/ app-manifests/04-ingress/ rendered-manifests/ 
