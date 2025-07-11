@@ -29,5 +29,5 @@ spec:
         - -c
         - |
           sleep 5;
-          wget {{ include "localai.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+          wget -O /dev/null {{ include "localai.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
   restartPolicy: Never
