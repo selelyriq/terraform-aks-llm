@@ -13,10 +13,24 @@ spec:
       labels:
         app: localai
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
         - name: localai
           image: localai/localai:latest
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           args:
-            - "--address=0.0.0.0:3000"
+            - "--address=0.0.0.0:4000"
           ports:
-            - containerPort: 3000
+            - containerPort: 4000

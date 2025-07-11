@@ -32,3 +32,4 @@ terraform.rc
 
 # Ignore provider lock files
 .terraform.lock.hcl 
+.terraform.tfstate.lock.info

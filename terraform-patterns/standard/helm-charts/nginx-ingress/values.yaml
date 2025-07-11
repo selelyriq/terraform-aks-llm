@@ -1,0 +1,16 @@
+controller:
+  ingressClassResource:
+    name: nginx  # This will be your ingressClassName in your Ingress YAML
+    enabled: true
+    default: false  # Only set to true if you want this to be default for all Ingresses
+
+  ingressClass: nginx  # Must match the ingressClassResource.name above
+
+  publishService:
+    enabled: true  # Required for getting external IP on cloud providers
+
+  service:
+    type: LoadBalancer  # AKS/GKE/EKS: use LoadBalancer. Local clusters may use NodePort
+
+  metrics:
+    enabled: true  # Optional: enable Prometheus metrics

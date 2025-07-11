@@ -1,0 +1,156 @@
+name: Helm Test, Scan, and Deploy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  lint-and-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Linting Helm chart
+        run: helm lint app-manifests/01-localai/localai
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get update && sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y trivy
+      
+      - name: Scan Helm chart with Trivy
+        run: trivy config --exit-code 0 --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL app-manifests/01-localai/localai
+      
+      - name: Render Helm template and save manifest
+        run: |
+          helm template my-release app-manifests/01-localai/localai --values app-manifests/01-localai/localai/values.yaml > rendered-localai.yaml
+      
+      - name: Upload rendered manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-localai-manifest
+          path: rendered-localai.yaml
+
+  test-on-kind:
+    runs-on: ubuntu-latest
+    needs: lint-and-scan
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Set up KinD cluster
+        uses: helm/kind-action@v1.10.0
+
+      - name: Wait for CoreDNS
+        run: |
+          kubectl rollout status deployment/coredns -n kube-system --timeout=120s
+
+      - name: Wait for cluster nodes to be ready
+        run: kubectl wait --for=condition=Ready node --all --timeout=120s
+
+      - name: Install Helm chart
+        run: helm install my-release app-manifests/01-localai/localai
+
+      - name: Test Helm chart
+        run: helm test my-release
+
+      - name: Debug failed resources
+        if: ${{ failure() }}
+        run: |
+          echo "Helm install or test failed. Debugging..."
+          echo "=== HELM LIST ==="
+          helm list
+          echo "=== HELM STATUS ==="
+          helm status my-release
+          echo "=== HELM HISTORY ==="
+          helm history my-release
+          echo "=== DESCRIBE PODS ==="
+          kubectl describe pods --all-namespaces
+          echo "=== ALL POD LOGS ==="
+          # The following command gets all logs from all containers in all pods
+          kubectl logs --all-containers=true --tail=-1 --all-namespaces
+
+      - name: Print logs for LocalAI pod
+        if: ${{ failure() }}
+        run: |
+          echo "=== LOGS FROM localai POD ==="
+          POD_NAME=$(kubectl get pods -l app.kubernetes.io/name=localai -o jsonpath="{.items[0].metadata.name}")
+          kubectl logs $POD_NAME --all-containers=true || true
+
+  render-charts:
+    runs-on: ubuntu-latest
+    needs: test-on-kind
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.2
+
+      - name: Render localai chart
+        run: |
+          mkdir -p rendered-manifests/localai
+          helm template localai app-manifests/01-localai/localai -n localai --output-dir rendered-manifests/localai
+      - name: Render photoprism chart
+        run: |
+          mkdir -p rendered-manifests/photoprism
+          helm template photoprism app-manifests/02-photoprisma/photoprism -n photoprism --output-dir rendered-manifests/photoprism
+      
+      - name: Upload rendered manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-manifests
+          path: rendered-manifests/
+
+  validate-manifests:
+    runs-on: ubuntu-latest
+    needs: render-charts
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download rendered manifests
+        uses: actions/download-artifact@v4
+        with:
+          name: rendered-manifests
+          path: rendered-manifests/
+
+      - name: Install kubeconform
+        run: |
+          curl -L https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
+          sudo mv kubeconform /usr/local/bin/
+      - name: Consolidate all manifests
+        run: |
+          cp -r app-manifests/01-localai/templates/* rendered-manifests/
+          cp -r app-manifests/03-argocd/* rendered-manifests/
+          cp -r app-manifests/04-ingress/* rendered-manifests/
+      - name: Run kubeconform
+        run: |
+          kubeconform -strict -summary -output text -kubernetes-version 1.29.0 \
+            -schema-location default \
+            -schema-location 'scanning/schemas/{{.Group}}/{{.ResourceAPIVersion}}/{{.ResourceKind}}.json' \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            rendered-manifests/
+      - name: Upload validated manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: validated-manifests
+          path: rendered-manifests/

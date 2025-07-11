@@ -1,0 +1,46 @@
+{
+    "type": "object",
+    "properties": {
+      "apiVersion": {
+        "type": "string",
+        "enum": ["argoproj.io/v1alpha1"]
+      },
+      "kind": {
+        "type": "string",
+        "enum": ["Application"]
+      },
+      "metadata": {
+        "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.29.0/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+      },
+      "spec": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "object",
+            "properties": {
+              "repoURL": { "type": "string" },
+              "path": { "type": "string" },
+              "targetRevision": { "type": "string" },
+              "helm": {
+                "type": "object",
+                "properties": {
+                  "values": { "type": "string" }
+                }
+              }
+            },
+            "required": ["repoURL", "path", "targetRevision"]
+          },
+          "destination": {
+            "type": "object",
+            "properties": {
+              "server": { "type": "string" },
+              "namespace": { "type": "string" }
+            },
+            "required": ["server", "namespace"]
+          }
+        },
+        "required": ["source", "destination"]
+      }
+    },
+    "required": ["apiVersion", "kind", "metadata", "spec"]
+  }

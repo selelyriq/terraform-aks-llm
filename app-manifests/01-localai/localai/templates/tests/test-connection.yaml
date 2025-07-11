@@ -7,9 +7,26 @@ metadata:
   annotations:
     "helm.sh/hook": test
 spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
   containers:
     - name: wget
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
       image: busybox
-      command: ['wget']
-      args: ['{{ include "localai.fullname" . }}:{{ .Values.service.port }}']
+      command:
+        - /bin/sh
+        - -c
+        - |
+          sleep 5;
+          wget -O /dev/null http://{{ include "localai.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
   restartPolicy: Never

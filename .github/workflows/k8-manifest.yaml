@@ -1,0 +1,127 @@
+name: Validate K8s Manifests
+
+on:
+  pull_request:
+    paths:
+      - 'app-manifests/01-localai/templates/**'
+      - 'app-manifests/02-photoprisma/**'
+      - 'app-manifests/03-argocd/**'
+  push:
+    branches:
+      - main
+
+jobs:
+  render-charts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.2
+
+      - name: Render localai chart
+        run: |
+          mkdir -p rendered-manifests/localai
+          helm template localai app-manifests/01-localai/localai -n localai --output-dir rendered-manifests/localai
+      - name: Render photoprism chart
+        run: |
+          mkdir -p rendered-manifests/photoprism
+          helm template photoprism app-manifests/02-photoprisma/photoprism -n photoprism --output-dir rendered-manifests/photoprism
+      
+      - name: Upload rendered manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-manifests
+          path: rendered-manifests/
+
+  validate-manifests:
+    runs-on: ubuntu-latest
+    needs: render-charts
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download rendered manifests
+        uses: actions/download-artifact@v4
+        with:
+          name: rendered-manifests
+          path: rendered-manifests/
+
+      - name: Install kubeconform
+        run: |
+          curl -L https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
+          sudo mv kubeconform /usr/local/bin/
+      - name: Consolidate all manifests
+        run: |
+          cp -r app-manifests/01-localai/templates/* rendered-manifests/
+          cp -r app-manifests/03-argocd/* rendered-manifests/
+          cp -r app-manifests/04-ingress/* rendered-manifests/
+      - name: Run kubeconform
+        run: |
+          kubeconform -strict -summary -output text -kubernetes-version 1.29.0 \
+            -schema-location default \
+            -schema-location 'scanning/schemas/{{.Group}}/{{.ResourceAPIVersion}}/{{.ResourceKind}}.json' \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            rendered-manifests/
+      - name: Upload validated manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: validated-manifests
+          path: rendered-manifests/
+
+  scan-manifests:
+    runs-on: ubuntu-latest
+    needs: validate-manifests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download validated manifests
+        uses: actions/download-artifact@v4
+        with:
+          name: validated-manifests
+          path: rendered-manifests/
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y trivy
+      - name: Run Trivy config scan
+        run: |
+          trivy config --severity HIGH,CRITICAL rendered-manifests/
+      - name: Run Trivy with SARIF output
+        run: |
+          trivy config --format sarif --output trivy-results.sarif rendered-manifests/
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: trivy-results.sarif
+
+  policy-checks:
+    runs-on: ubuntu-latest
+    needs: scan-manifests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download rendered manifests
+        uses: actions/download-artifact@v4
+        with:
+          name: rendered-manifests
+          path: rendered-manifests/
+
+      - name: Install Conftest
+        run: |
+          LATEST_VERSION=$(curl -s "https://api.github.com/repos/open-policy-agent/conftest/releases/latest" | grep -oP '"tag_name": "\K(v[0-9\\.]+)')
+          curl -L "https://github.com/open-policy-agent/conftest/releases/download/${LATEST_VERSION}/conftest_${LATEST_VERSION#v}_Linux_x86_64.tar.gz" | tar xz
+          sudo mv conftest /usr/local/bin/
+      - name: Run Conftest
+        run: |
+          conftest test --policy scanning/policy app-manifests/01-localai/templates/ app-manifests/03-argocd/ app-manifests/04-ingress/ rendered-manifests/ 
