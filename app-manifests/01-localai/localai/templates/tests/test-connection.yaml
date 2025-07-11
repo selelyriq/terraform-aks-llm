@@ -18,7 +18,6 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         runAsGroup: 1000
-        readOnlyRootFilesystem: true
         allowPrivilegeEscalation: false
         capabilities:
           drop:
@@ -29,5 +28,5 @@ spec:
         - -c
         - |
           sleep 5;
-          wget -O /dev/null {{ include "localai.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+          wget -O /dev/null http://{{ include "localai.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
   restartPolicy: Never
