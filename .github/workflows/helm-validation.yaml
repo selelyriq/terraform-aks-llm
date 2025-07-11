@@ -65,7 +65,7 @@ jobs:
         run: kubectl wait --for=condition=Ready node --all --timeout=120s
 
       - name: Install Helm chart
-        run: helm install my-release app-manifests/01-localai/localai --wait
+        run: helm install my-release app-manifests/01-localai/localai
 
       - name: Test Helm chart
         run: helm test my-release
@@ -74,6 +74,12 @@ jobs:
         if: ${{ failure() }}
         run: |
           echo "Helm install or test failed. Debugging..."
+          echo "=== HELM LIST ==="
+          helm list
+          echo "=== HELM STATUS ==="
+          helm status my-release
+          echo "=== HELM HISTORY ==="
+          helm history my-release
           echo "=== DESCRIBE PODS ==="
           kubectl describe pods --all-namespaces
           echo "=== ALL POD LOGS ==="
