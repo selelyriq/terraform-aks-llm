@@ -7,8 +7,8 @@ spec:
   project: default
   source:
     repoURL: https://github.com/selelyriq/terraform-aks-llm.git
-    path: app-manifests/01-localai
-    targetRevision: 1.2.3
+    path: app-manifests/01-localai/localai
+    targetRevision: main
     helm:
       values: |
         service:
@@ -16,3 +16,9 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: localai
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

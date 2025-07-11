@@ -5,7 +5,9 @@ metadata:
   namespace: localai
   annotations:
     cert-manager.io/cluster-issuer: selfsigned-issuer
+    argocd.argoproj.io/sync-wave: "1"
 spec:
+  ingressClassName: nginx
   tls:
     - hosts:
         - localai.dev.local
@@ -20,4 +22,4 @@ spec:
               service:
                 name: localai-service
                 port:
-                  number: 4000
+                  number: 8080

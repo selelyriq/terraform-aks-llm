@@ -64,6 +64,7 @@ resource "helm_release" "ingress" {
   values = [
     file("${path.module}/nginx-ingress/values.yaml")
   ]
+  depends_on = [helm_release.cert_manager]
 }
 
 resource "helm_release" "cert_manager" {
@@ -78,4 +79,10 @@ resource "helm_release" "cert_manager" {
     name  = "installCRDs"
     value = "true"
   }
+}
+
+resource "kubernetes_manifest" "argocd_app" {
+  manifest = yamldecode(file("${path.root}/../../app-manifests/03-argocd/01-argocd-config.yaml"))
+
+  depends_on = [helm_release.argocd]
 }
