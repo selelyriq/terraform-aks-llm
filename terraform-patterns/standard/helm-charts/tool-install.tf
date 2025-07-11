@@ -86,3 +86,9 @@ resource "kubernetes_manifest" "argocd_app" {
 
   depends_on = [helm_release.argocd]
 }
+
+resource "kubernetes_manifest" "photoprism_app" {
+  manifest = yamldecode(file("${path.root}/../../app-manifests/03-argocd/02-photoprism-config.yaml"))
+
+  depends_on = [helm_release.argocd]
+}

@@ -17,12 +17,6 @@ spec:
         app.kubernetes.io/name: {{ include "photoprism.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
-      {{- if .Values.persistence.enabled }}
-      volumes:
-        - name: photoprism-storage
-          persistentVolumeClaim:
-            claimName: {{ .Values.persistence.existingClaim | default (include "photoprism.fullname" .) }}
-      {{- end }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       terminationGracePeriodSeconds: 5
