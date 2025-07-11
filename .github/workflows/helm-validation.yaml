@@ -80,6 +80,13 @@ jobs:
           # The following command gets all logs from all containers in all pods
           kubectl logs --all-containers=true --tail=-1 --all-namespaces
 
+      - name: Print logs for LocalAI pod
+        if: ${{ failure() }}
+        run: |
+          echo "=== LOGS FROM localai POD ==="
+          POD_NAME=$(kubectl get pods -l app.kubernetes.io/name=localai -o jsonpath="{.items[0].metadata.name}")
+          kubectl logs $POD_NAME --all-containers=true || true
+
   validate-argocd:
     runs-on: ubuntu-latest
     needs: test-on-kind
