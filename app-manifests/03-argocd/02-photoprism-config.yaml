@@ -1,13 +1,13 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: localai
+  name: photoprism
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://github.com/selelyriq/terraform-aks-llm.git
-    path: app-manifests/01-localai/localai
+    path: app-manifests/02-photoprisma/photoprism
     targetRevision: main
     helm:
       values: |
@@ -15,10 +15,10 @@ spec:
           type: LoadBalancer
   destination:
     server: https://kubernetes.default.svc
-    namespace: localai
+    namespace: photoprism
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-    - CreateNamespace=true
+    - CreateNamespace=true 
