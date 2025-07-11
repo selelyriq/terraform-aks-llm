@@ -62,7 +62,7 @@ jobs:
           kubectl rollout status deployment/coredns -n kube-system --timeout=120s
 
       - name: Wait for cluster nodes to be ready
-        run: kubectl wait --for=condition=Ready node --all --timeout=10m
+        run: kubectl wait --for=condition=Ready node --all --timeout=120s
 
       - name: Install Helm chart
         run: helm install my-release app-manifests/01-localai/localai --wait
