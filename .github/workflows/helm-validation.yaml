@@ -107,4 +107,6 @@ jobs:
 
       - name: Validate ArgoCD Application YAML
         run: |
-          kubeconform -schema-location default -schema-location 'scanning/schemas/{{.Group}}/{{.Version}}/{{.ResourceKind}}.json' app-manifests/03-argocd/01-argocd-config.yaml 
+          kubeconform -schema-location default -schema-location 'scanning/schemas/{{.Group}}/{{.ResourceAPIVersion}}/{{.ResourceKind}}.json' app-manifests/03-argocd/01-argocd-config.yaml
+
+#      - name: Validate Photoprism Helm Chart 
