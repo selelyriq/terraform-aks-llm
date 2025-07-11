@@ -24,6 +24,10 @@ spec:
           drop:
             - ALL
       image: busybox
-      command: ['wget']
-      args: ['{{ include "localai.fullname" . }}:{{ .Values.service.port }}']
+      command:
+        - /bin/sh
+        - -c
+        - |
+          sleep 5;
+          wget {{ include "localai.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
   restartPolicy: Never
