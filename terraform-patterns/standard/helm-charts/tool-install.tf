@@ -67,6 +67,19 @@ resource "helm_release" "ingress" {
   depends_on = [helm_release.cert_manager]
 }
 
+resource "helm_release" "photoprism" {
+  name       = "photoprism"
+  namespace  = "default"
+  chart      = "${path.root}/../../app-manifests/02-photoprisma/photoprism"
+  version    = "2.0.0"
+
+  values = [
+    file("${path.root}/../../app-manifests/02-photoprisma/photoprism/values.yaml")
+  ]
+
+  depends_on = [helm_release.ingress]
+}
+
 resource "helm_release" "cert_manager" {
   name             = "cert-manager"
   repository       = "https://charts.jetstack.io"
@@ -87,8 +100,8 @@ resource "kubernetes_manifest" "argocd_app" {
   depends_on = [helm_release.argocd]
 }
 
-resource "kubernetes_manifest" "photoprism_app" {
-  manifest = yamldecode(file("${path.root}/../../app-manifests/03-argocd/02-photoprism-config.yaml"))
-
-  depends_on = [helm_release.argocd]
-}
+# resource "kubernetes_manifest" "photoprism_app" {
+#   manifest = yamldecode(file("${path.root}/../../app-manifests/03-argocd/02-photoprism-config.yaml"))
+#
+#   depends_on = [helm_release.argocd]
+# }

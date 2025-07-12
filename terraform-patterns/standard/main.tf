@@ -50,4 +50,8 @@ provider "kubernetes" {
 module "argocd" {
   source     = "./helm-charts"
   depends_on = [azurerm_kubernetes_cluster.aks]
+  providers = {
+    helm       = helm
+    kubernetes = kubernetes
+  }
 }
