@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'terraform/**'
-      - '.github/workflows/on-push.yaml'
+      - '.github/workflows/terraform-apply.yaml'
 
 permissions: # Explicitly declare minimal required permissions
   id-token: write
@@ -115,4 +115,3 @@ jobs:
         working-directory: terraform
         env:
           TF_LOG: DEBUG
-          
