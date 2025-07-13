@@ -1,13 +1,7 @@
-name: Terraform CI/CD
+name: Terraform CD (main)
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'terraform-patterns/**'
-      - '.github/workflows/terraform-apply.yaml'
-  pull_request:
     branches:
       - main
     paths:
@@ -17,85 +11,10 @@ on:
 permissions: # Explicitly declare minimal required permissions
   id-token: write
   contents: read
+  pull-requests: write
 
 jobs:
-  checkov:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - name: checkout
-        uses: actions/checkout@v4
-      - name: Checkov GitHub Action
-        uses: bridgecrewio/checkov-action@v12
-        with:
-          # This will add both a CLI output to the console and create a results.sarif file
-          output_format: cli,sarif
-          output_file_path: console,results.sarif
-        
-    
-  format:
-    needs: checkov
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout
-        uses: actions/checkout@v4
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-      - name: Terraform Format
-        run: terraform fmt -check -recursive
-        working-directory: terraform-patterns/standard
-
-  terraform-validate:
-    needs: format
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout
-        uses: actions/checkout@v4
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-      - name: Configure Azure Credentials
-        uses: azure/login@v1
-        with:
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-      - name: Terraform Init
-        run: terraform init
-        working-directory: terraform-patterns/standard
-      - name: Terraform Validate
-        run: terraform validate
-        working-directory: terraform-patterns/standard
-
-  terraform-plan:
-    needs: terraform-validate
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout
-        uses: actions/checkout@v4
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-      - name: Configure Azure Credentials
-        uses: azure/login@v1
-        with:
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-      - name: Terraform Init
-        run: terraform init
-        working-directory: terraform-patterns/standard
-      - name: Terraform Plan
-        run: terraform plan -out=plan.tfplan
-        working-directory: terraform-patterns/standard
-        env:
-          TF_LOG: DEBUG
-      - name: Upload Terraform Plan
-        uses: actions/upload-artifact@v4
-        with:
-          name: plan.tfplan
-          path: terraform-patterns/standard/plan.tfplan
-
   terraform-apply:
-    needs: terraform-plan
     runs-on: ubuntu-latest
     steps:
       - name: checkout
