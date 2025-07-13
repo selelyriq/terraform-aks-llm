@@ -1,11 +1,17 @@
-name: push
+name: Terraform CI/CD
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform-patterns/**'
+      - '.github/workflows/terraform-apply.yaml'
   pull_request:
     branches:
       - main
     paths:
-      - 'terraform/**'
+      - 'terraform-patterns/**'
       - '.github/workflows/terraform-apply.yaml'
 
 permissions: # Explicitly declare minimal required permissions
@@ -37,7 +43,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
       - name: Terraform Format
         run: terraform fmt -check -recursive
-        working-directory: terraform
+        working-directory: terraform-patterns/standard
 
   terraform-validate:
     needs: format
@@ -55,10 +61,10 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
       - name: Terraform Init
         run: terraform init
-        working-directory: terraform
+        working-directory: terraform-patterns/standard
       - name: Terraform Validate
         run: terraform validate
-        working-directory: terraform
+        working-directory: terraform-patterns/standard
 
   terraform-plan:
     needs: terraform-validate
@@ -76,17 +82,17 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
       - name: Terraform Init
         run: terraform init
-        working-directory: terraform
+        working-directory: terraform-patterns/standard
       - name: Terraform Plan
         run: terraform plan -out=plan.tfplan
-        working-directory: terraform
+        working-directory: terraform-patterns/standard
         env:
           TF_LOG: DEBUG
       - name: Upload Terraform Plan
         uses: actions/upload-artifact@v4
         with:
           name: plan.tfplan
-          path: terraform
+          path: terraform-patterns/standard/plan.tfplan
 
   terraform-apply:
     needs: terraform-plan
@@ -106,12 +112,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: plan.tfplan
-          path: terraform
+          path: terraform-patterns/standard
       - name: Terraform Init
         run: terraform init
-        working-directory: terraform
+        working-directory: terraform-patterns/standard
       - name: Terraform Apply
         run: terraform apply plan.tfplan
-        working-directory: terraform
+        working-directory: terraform-patterns/standard
         env:
           TF_LOG: DEBUG
