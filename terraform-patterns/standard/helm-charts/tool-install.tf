@@ -96,7 +96,7 @@ resource "helm_release" "cert_manager" {
 }
 
 resource "kubernetes_manifest" "argocd_app" {
-  manifest = yamldecode(file("${path.root}/../../app-manifests/03-argocd/01-argocd-config.yaml"))
+  manifest   = yamldecode(file("${path.root}/../../app-manifests/03-argocd/01-argocd-config.yaml"))
   depends_on = [helm_release.argocd]
 }
 
