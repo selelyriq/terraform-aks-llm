@@ -27,11 +27,16 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
-      - name: Download Terraform Plan
-        uses: actions/download-artifact@v4
+      - name: Download Terraform Plan from Azure
+        uses: azure/cli@v1
         with:
-          name: plan.tfplan
-          path: terraform-patterns/standard
+          inlineScript: |
+            az storage blob download \
+              --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
+              --container-name tfplans \
+              --name ${{ github.sha }}/plan.tfplan \
+              --file terraform-patterns/standard/plan.tfplan \
+              --auth-mode login
       - name: Terraform Init
         run: terraform init
         working-directory: terraform-patterns/standard
