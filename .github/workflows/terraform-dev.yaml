@@ -78,7 +78,12 @@ jobs:
         run: terraform init
         working-directory: terraform-patterns/standard
       - name: Terraform Plan
-        run: terraform plan
+        run: terraform plan -out=plan.tfplan
         working-directory: terraform-patterns/standard
         env:
-          TF_LOG: DEBUG 
+          TF_LOG: DEBUG
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: plan.tfplan
+          path: terraform-patterns/standard/plan.tfplan 
