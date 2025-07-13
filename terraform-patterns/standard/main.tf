@@ -23,6 +23,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.0"
     }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "~> 1.14.0"
+    }
   }
 }
 
@@ -47,11 +51,19 @@ provider "kubernetes" {
   cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].cluster_ca_certificate)
 }
 
+provider "kubectl" {
+  host                   = azurerm_kubernetes_cluster.aks.kube_config[0].host
+  client_certificate     = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].client_certificate)
+  client_key             = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].client_key)
+  cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].cluster_ca_certificate)
+}
+
 module "argocd" {
   source     = "./helm-charts"
   depends_on = [azurerm_kubernetes_cluster.aks]
   providers = {
     helm       = helm
     kubernetes = kubernetes
+    kubectl    = kubectl
   }
 }

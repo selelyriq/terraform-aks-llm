@@ -72,6 +72,7 @@ resource "helm_release" "photoprism" {
   namespace  = "default"
   chart      = "${path.root}/../../app-manifests/02-photoprisma/photoprism"
   version    = "2.0.0"
+  timeout    = 600
 
   values = [
     file("${path.root}/../../app-manifests/02-photoprisma/photoprism/values.yaml")
@@ -94,14 +95,13 @@ resource "helm_release" "cert_manager" {
   }
 }
 
-resource "kubernetes_manifest" "argocd_app" {
-  manifest = yamldecode(file("${path.root}/../../app-manifests/03-argocd/01-argocd-config.yaml"))
-
+resource "kubectl_manifest" "argocd_app" {
+  yaml_body = file("${path.root}/../../app-manifests/03-argocd/01-argocd-config.yaml")
   depends_on = [helm_release.argocd]
 }
 
-# resource "kubernetes_manifest" "photoprism_app" {
-#   manifest = yamldecode(file("${path.root}/../../app-manifests/03-argocd/02-photoprism-config.yaml"))
+# resource "kubectl_manifest" "photoprism_app" {
+#   yaml_body = file("${path.root}/../../app-manifests/03-argocd/02-photoprism-config.yaml")
 #
 #   depends_on = [helm_release.argocd]
 # }
