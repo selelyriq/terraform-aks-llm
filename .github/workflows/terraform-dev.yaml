@@ -82,8 +82,13 @@ jobs:
         working-directory: terraform-patterns/standard
         env:
           TF_LOG: DEBUG
-      - name: Upload Terraform Plan
-        uses: actions/upload-artifact@v4
+      - name: Upload Terraform Plan to Azure
+        uses: azure/cli@v1
         with:
-          name: plan.tfplan
-          path: terraform-patterns/standard/plan.tfplan 
+          inlineScript: |
+            az storage blob upload \
+              --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
+              --container-name tfplans \
+              --name ${{ github.sha }}/plan.tfplan \
+              --file terraform-patterns/standard/plan.tfplan \
+              --auth-mode login 
