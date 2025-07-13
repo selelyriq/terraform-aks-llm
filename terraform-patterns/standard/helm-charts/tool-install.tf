@@ -68,11 +68,11 @@ resource "helm_release" "ingress" {
 }
 
 resource "helm_release" "photoprism" {
-  name       = "photoprism"
-  namespace  = "default"
-  chart      = "${path.root}/../../app-manifests/02-photoprisma/photoprism"
-  version    = "2.0.0"
-  timeout    = 600
+  name      = "photoprism"
+  namespace = "default"
+  chart     = "${path.root}/../../app-manifests/02-photoprisma/photoprism"
+  version   = "2.0.0"
+  timeout   = 600
 
   values = [
     file("${path.root}/../../app-manifests/02-photoprisma/photoprism/values.yaml")
@@ -96,7 +96,7 @@ resource "helm_release" "cert_manager" {
 }
 
 resource "kubectl_manifest" "argocd_app" {
-  yaml_body = file("${path.root}/../../app-manifests/03-argocd/01-argocd-config.yaml")
+  yaml_body  = file("${path.root}/../../app-manifests/03-argocd/01-argocd-config.yaml")
   depends_on = [helm_release.argocd]
 }
 
