@@ -89,6 +89,6 @@ jobs:
             az storage blob upload \
               --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
               --container-name tfplans \
-              --name ${{ github.sha }}/plan.tfplan \
+              --name pr-${{ github.event.pull_request.number }}/plan.tfplan \
               --file terraform-patterns/standard/plan.tfplan \
               --auth-mode login 
