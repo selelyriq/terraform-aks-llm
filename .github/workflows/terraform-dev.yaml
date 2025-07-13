@@ -27,7 +27,6 @@ jobs:
           output_format: cli,sarif
           output_file_path: console,results.sarif
         
-    
   format:
     needs: checkov
     runs-on: ubuntu-latest
