@@ -27,6 +27,6 @@ spec:
         - /bin/sh
         - -c
         - |
-          sleep 5;
+          sleep 20;
           wget -O /dev/null http://{{ include "localai.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
   restartPolicy: Never
