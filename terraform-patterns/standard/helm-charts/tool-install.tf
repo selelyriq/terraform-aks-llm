@@ -96,7 +96,7 @@ resource "helm_release" "cert_manager" {
 }
 
 resource "kubectl_manifest" "argocd_app" {
-  yaml_body = file("${path.root}/../../app-manifests/03-argocd/01-argocd-config.yaml")
+  yaml_body  = file("${path.root}/../../app-manifests/03-argocd/01-argocd-config.yaml")
   depends_on = [helm_release.argocd]
 }
 
