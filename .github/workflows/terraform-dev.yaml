@@ -91,4 +91,5 @@ jobs:
               --container-name tfplans \
               --name pr-${{ github.event.pull_request.number }}/plan.tfplan \
               --file terraform-patterns/standard/plan.tfplan \
-              --auth-mode login 
+              --auth-mode login \
+              --overwrite 
