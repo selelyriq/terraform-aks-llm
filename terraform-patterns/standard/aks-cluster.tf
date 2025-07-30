@@ -61,4 +61,3 @@ resource "azurerm_network_security_rule" "allow_http_inbound" {
   resource_group_name         = azurerm_kubernetes_cluster.aks.node_resource_group
   network_security_group_name = data.azurerm_resources.aks_nsg.resources[0].name
 }
-
