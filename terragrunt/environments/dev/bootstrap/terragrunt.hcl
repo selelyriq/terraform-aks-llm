@@ -1,5 +1,5 @@
 terraform {
-  source = "../../modules/bootstrap"
+  source = "../../../modules/bootstrap"
 }
 
 inputs = {
