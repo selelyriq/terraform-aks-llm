@@ -35,7 +35,7 @@ jobs:
       - name: Setup Terragrunt
         uses: autero1/action-terragrunt@v3.0.2
         with:
-          tgVersion: v0.58.11
+          terragrunt-version: v0.58.11
       - name: Terragrunt Format
         run: terragrunt hclfmt --terragrunt-check
         working-directory: terragrunt
@@ -49,7 +49,7 @@ jobs:
       - name: Setup Terragrunt
         uses: autero1/action-terragrunt@v3.0.2
         with:
-          tgVersion: v0.58.11
+          terragrunt-version: v0.58.11
       - name: Configure Azure Credentials
         uses: azure/login@v1
         with:
@@ -72,7 +72,7 @@ jobs:
       - name: Setup Terragrunt
         uses: autero1/action-terragrunt@v3.0.2
         with:
-          tgVersion: v0.58.11
+          terragrunt-version: v0.58.11
       - name: Configure Azure Credentials
         uses: azure/login@v1
         with:
