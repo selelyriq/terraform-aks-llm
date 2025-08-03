@@ -1,56 +1,36 @@
-name: Terraform CD (main)
+name: Terragrunt Apply (dev)
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'terraform-patterns/**'
+      - 'terragrunt/**'
       - '.github/workflows/terraform-apply.yaml'
 
 permissions: # Explicitly declare minimal required permissions
   id-token: write
   contents: read
-  pull-requests: write
 
 jobs:
-  terraform-apply:
+  terragrunt-apply:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
         uses: actions/checkout@v4
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - name: Setup Terragrunt
+        uses: autero1/action-terragrunt@v2.1.0
       - name: Configure Azure Credentials
         uses: azure/login@v1
         with:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
-      - name: Get PR number from commit
-        id: get_pr
-        run: |
-          PR_NUMBER=$(echo "${{ github.event.head_commit.message }}" | grep -oP "(?<=#)[0-9]+" | head -n 1)
-          if [[ -z "$PR_NUMBER" ]]; then
-            echo "Could not extract PR number from commit message."
-            exit 1
-          fi
-          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
-      - name: Download Terraform Plan from Azure
-        uses: azure/cli@v1
-        with:
-          inlineScript: |
-            az storage blob download \
-              --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
-              --container-name tfplans \
-              --name pr-${{ env.PR_NUMBER }}/plan.tfplan \
-              --file terraform-patterns/standard/plan.tfplan \
-              --auth-mode login
-      - name: Terraform Init
-        run: terraform init
-        working-directory: terraform-patterns/standard
-      - name: Terraform Apply
-        run: terraform apply plan.tfplan
-        working-directory: terraform-patterns/standard
+      - name: Terragrunt Init
+        run: terragrunt run-all init -reconfigure
+        working-directory: terragrunt/environments/dev
+      - name: Terragrunt Apply
+        run: terragrunt run-all apply -auto-approve
+        working-directory: terragrunt/environments/dev
         env:
           TF_LOG: DEBUG

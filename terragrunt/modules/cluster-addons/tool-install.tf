@@ -1,4 +1,5 @@
 # Documentation Reference: https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release
+
 # Resource to install ArgoCD
 resource "helm_release" "argocd" {
   name             = "argocd"
@@ -67,20 +68,6 @@ resource "helm_release" "ingress" {
   depends_on = [helm_release.cert_manager]
 }
 
-resource "helm_release" "photoprism" {
-  name      = "photoprism"
-  namespace = "default"
-  chart     = "${path.root}/../../app-manifests/02-photoprisma/photoprism"
-  version   = "2.0.0"
-  timeout   = 600
-
-  values = [
-    file("${path.root}/../../app-manifests/02-photoprisma/photoprism/values.yaml")
-  ]
-
-  depends_on = [helm_release.ingress]
-}
-
 resource "helm_release" "cert_manager" {
   name             = "cert-manager"
   repository       = "https://charts.jetstack.io"
@@ -95,13 +82,9 @@ resource "helm_release" "cert_manager" {
   }
 }
 
-resource "kubectl_manifest" "argocd_app" {
-  yaml_body  = file("${path.root}/../../app-manifests/03-argocd/01-argocd-config.yaml")
-  depends_on = [helm_release.argocd]
+resource "helm_release" "localai" {
+  name             = "localai"
+  chart            = "./localai-app/localai"
+  namespace        = "localai"
+  create_namespace = true
 }
-
-# resource "kubectl_manifest" "photoprism_app" {
-#   yaml_body = file("${path.root}/../../app-manifests/03-argocd/02-photoprism-config.yaml")
-#
-#   depends_on = [helm_release.argocd]
-# }

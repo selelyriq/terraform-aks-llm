@@ -1,13 +1,12 @@
-name: Terraform CI (dev)
+name: Terragrunt CI (dev)
 
 on:
   pull_request:
     branches:
       - main
     paths:
-      - 'terraform-patterns/**'
+      - 'terragrunt/**'
       - '.github/workflows/terraform-dev.yaml'
-      - '.github/workflows/terraform-apply.yaml'
 
 permissions: # Explicitly declare minimal required permissions
   id-token: write
@@ -33,55 +32,62 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-      - name: Terraform Format
-        run: terraform fmt -check -recursive
-        working-directory: terraform-patterns/standard
+      - name: Setup Terragrunt
+        uses: autero1/action-terragrunt@v2.1.0
+      - name: Terragrunt Format
+        run: terragrunt hclfmt --terragrunt-check
+        working-directory: terragrunt
 
-  terraform-validate:
+  terragrunt-validate:
     needs: format
     runs-on: ubuntu-latest
     steps:
       - name: checkout
         uses: actions/checkout@v4
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - name: Setup Terragrunt
+        uses: autero1/action-terragrunt@v2.1.0
       - name: Configure Azure Credentials
         uses: azure/login@v1
         with:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
-      - name: Terraform Init
-        run: terraform init
-        working-directory: terraform-patterns/standard
-      - name: Terraform Validate
-        run: terraform validate
-        working-directory: terraform-patterns/standard
+      - name: Terragrunt Init
+        run: terragrunt run-all init -reconfigure
+        working-directory: terragrunt/environments/dev
+      - name: Terragrunt Validate
+        run: terragrunt run-all validate
+        working-directory: terragrunt/environments/dev
 
-  terraform-plan:
-    needs: terraform-validate
+  terragrunt-plan:
+    needs: terragrunt-validate
     runs-on: ubuntu-latest
     steps:
       - name: checkout
         uses: actions/checkout@v4
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - name: Setup Terragrunt
+        uses: autero1/action-terragrunt@v2.1.0
       - name: Configure Azure Credentials
         uses: azure/login@v1
         with:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
-      - name: Terraform Init
-        run: terraform init
-        working-directory: terraform-patterns/standard
-      - name: Terraform Plan
-        run: terraform plan -out=plan.tfplan
-        working-directory: terraform-patterns/standard
+      - name: Terragrunt Init
+        run: terragrunt run-all init -reconfigure
+        working-directory: terragrunt/environments/dev
+      - name: Terragrunt Plan
+        run: terragrunt run-all plan -out=plan.tfplan
+        working-directory: terragrunt/environments/dev
         env:
           TF_LOG: DEBUG
+      - name: Archive plan files
+        run: |
+          tar -czvf pr-${{ github.event.pull_request.number }}.tar.gz \
+          -C terragrunt/environments/dev \
+          --exclude='**/.terragrunt-cache' \
+          .
+        
       - name: Upload Terraform Plan to Azure
         uses: azure/cli@v1
         with:
@@ -89,7 +95,7 @@ jobs:
             az storage blob upload \
               --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
               --container-name tfplans \
-              --name pr-${{ github.event.pull_request.number }}/plan.tfplan \
-              --file terraform-patterns/standard/plan.tfplan \
+              --name pr-${{ github.event.pull_request.number }}.tar.gz \
+              --file pr-${{ github.event.pull_request.number }}.tar.gz \
               --auth-mode login \
-              --overwrite 
+              --overwrite
