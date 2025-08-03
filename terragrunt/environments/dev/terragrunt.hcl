@@ -1,7 +1,3 @@
-dependency "bootstrap" {
-  config_path = "bootstrap"
-}
-
 remote_state {
   backend = "azurerm"
   config = {
