@@ -8,9 +8,9 @@ variable "location" {
   description = "The Azure region to create the remote state resources in."
 }
 
-variable "storage_account_name" {
+variable "storage_account_name_prefix" {
   type        = string
-  description = "The name of the storage account to create for the remote state."
+  description = "The prefix for the storage account name."
 }
 
 variable "storage_container_name" {
