@@ -19,7 +19,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
       - name: Setup Terragrunt
-        uses: autero1/action-terragrunt@v2.1.0
+        uses: autero1/action-terragrunt@v3.0.2
       - name: Configure Azure Credentials
         uses: azure/login@v1
         with:
