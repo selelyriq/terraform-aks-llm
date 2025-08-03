@@ -1,5 +1,8 @@
 terraform {
   required_version = "~> 1.12.2"
+
+  backend "azurerm" {}
+  
   required_providers {
     kubernetes = {
       source  = "hashicorp/kubernetes"
