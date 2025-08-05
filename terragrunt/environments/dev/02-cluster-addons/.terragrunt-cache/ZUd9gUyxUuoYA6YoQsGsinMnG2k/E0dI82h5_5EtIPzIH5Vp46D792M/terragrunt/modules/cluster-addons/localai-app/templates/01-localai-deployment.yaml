@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: localai
+  namespace: localai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: localai
+  template:
+    metadata:
+      labels:
+        app: localai
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: localai
+          image: localai/localai:latest
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          args:
+            - "--address=0.0.0.0:8080"
+          ports:
+            - containerPort: 8080
