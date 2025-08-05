@@ -2,20 +2,15 @@ include {
   path = find_in_parent_folders()
 }
 
-dependency "bootstrap" {
-  config_path = "../bootstrap"
+dependency "core-cluster" {
+  config_path = "../core-cluster"
+  mock_outputs = {
+    kube_config = ""
+  }
 }
 
 terraform {
   source = "../../../modules/cluster-addons"
-}
-
-dependencies {
-  paths = ["../core-cluster"]
-}
-
-dependency "core-cluster" {
-  config_path = "../core-cluster"
 }
 
 inputs = {
