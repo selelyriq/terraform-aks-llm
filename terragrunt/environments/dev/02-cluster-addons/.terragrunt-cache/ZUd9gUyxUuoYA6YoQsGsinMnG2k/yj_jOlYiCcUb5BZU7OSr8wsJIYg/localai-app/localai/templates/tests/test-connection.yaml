@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "localai.fullname" . }}-test-connection"
+  labels:
+    {{- include "localai.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+  containers:
+    - name: wget
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+      image: busybox
+      command:
+        - /bin/sh
+        - -c
+        - |
+          sleep 20;
+          wget -O /dev/null http://{{ include "localai.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+  restartPolicy: Never
