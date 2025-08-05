@@ -8,6 +8,10 @@ remote_state {
   }
 }
 
+dependency "bootstrap" {
+  config_path = "./bootstrap"
+}
+
 inputs = {
   environment = "dev"
 }
