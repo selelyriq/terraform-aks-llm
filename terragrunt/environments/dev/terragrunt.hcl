@@ -1,15 +1,15 @@
 remote_state {
   backend = "azurerm"
   config = {
-    resource_group_name  = dependency.bootstrap.outputs.resource_group_name
-    storage_account_name = dependency.bootstrap.outputs.storage_account_name
-    container_name       = dependency.bootstrap.outputs.storage_container_name
+    resource_group_name  = "DefaultResourceGroup-EUS"
+    storage_account_name = "lyriqseleterraform"
+    container_name       = "backend"
     key                  = "${path_relative_to_include()}/terraform.tfstate"
   }
-}
-
-dependency "bootstrap" {
-  config_path = "./bootstrap"
+  generate = {
+    path      = "backend.tf"
+    if_exists = "overwrite_terragrunt"
+  }
 }
 
 inputs = {

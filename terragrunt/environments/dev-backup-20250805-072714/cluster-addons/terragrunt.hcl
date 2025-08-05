@@ -2,6 +2,10 @@ include {
   path = find_in_parent_folders()
 }
 
+dependency "bootstrap" {
+  config_path = "../bootstrap"
+}
+
 dependency "core-cluster" {
   config_path = "../core-cluster"
   mock_outputs = {
