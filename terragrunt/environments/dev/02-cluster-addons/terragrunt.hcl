@@ -15,7 +15,7 @@ dependency "infrastructure" {
 }
 
 terraform {
-  source = "../../../modules/cluster-addons"
+  source = "${get_repo_root()}//terragrunt/modules/cluster-addons"
 }
 
 inputs = {

@@ -3,7 +3,7 @@ include {
 }
 
 terraform {
-  source = "../../../modules/core-cluster"
+  source = "${get_repo_root()}//terragrunt/modules/core-cluster"
 }
 
 inputs = {
