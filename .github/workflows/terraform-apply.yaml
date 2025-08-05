@@ -31,10 +31,10 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
       - name: Terragrunt Init
-        run: terragrunt run-all init -reconfigure
+        run: terragrunt run-all init --terragrunt-non-interactive -reconfigure
         working-directory: terragrunt/environments/dev
       - name: Terragrunt Apply
-        run: terragrunt run-all apply -auto-approve
+        run: terragrunt run-all apply --terragrunt-non-interactive -auto-approve
         working-directory: terragrunt/environments/dev
         env:
           TF_LOG: DEBUG
