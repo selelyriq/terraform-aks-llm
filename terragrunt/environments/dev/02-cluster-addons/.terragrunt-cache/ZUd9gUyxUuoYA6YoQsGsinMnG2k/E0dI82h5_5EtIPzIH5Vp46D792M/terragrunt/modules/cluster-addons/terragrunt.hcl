@@ -12,6 +12,7 @@ dependency "infrastructure" {
       cluster_ca_certificate = "mock"
     }
   }
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan"]
 }
 
 terraform {
@@ -19,5 +20,13 @@ terraform {
 }
 
 inputs = {
-  kube_config = dependency.infrastructure.outputs.kube_config
+  kube_config = try(
+    dependency.infrastructure.outputs.kube_config,
+    {
+      host                   = "https://mock.azmk8s.io"
+      client_certificate     = "mock"
+      client_key             = "mock"
+      cluster_ca_certificate = "mock"
+    }
+  )
 }
